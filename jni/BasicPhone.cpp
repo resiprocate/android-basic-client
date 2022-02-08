@@ -1,4 +1,8 @@
 
+// need to include this first as some of the symbol names clash with
+// macros from other loggers
+#include "base/logging.h"
+
 #include "rutil/AndroidLogger.hxx"
 #include "rutil/Log.hxx"
 #include "rutil/Logger.hxx"
@@ -28,6 +32,11 @@
 #include <sstream>
 
 #include <jni.h>
+
+#include "rtc_base/thread.h"
+
+#include <api/create_peerconnection_factory.h>
+#include <api/peer_connection_interface.h>
 
 using namespace std;
 using namespace resip;
@@ -177,6 +186,58 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basicmessage_SipStack_sendMe
    env->ReleaseStringUTFChars(body, _body);
 }
 
+class PCO : public webrtc::PeerConnectionObserver {
+   public:
+      PCO() {}
+
+      void OnSignalingChange(webrtc::PeerConnectionInterface::SignalingState new_state) override {
+         InfoLog(<< "PeerConnectionObserver::SignalingChange(" << new_state << ")");
+      };
+
+      void OnAddStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override {
+         InfoLog(<< "PeerConnectionObserver::AddStream");
+      };
+
+      void OnRemoveStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override {
+         InfoLog(<< "PeerConnectionObserver::RemoveStream");
+      };
+
+      void OnDataChannel(rtc::scoped_refptr<webrtc::DataChannelInterface> data_channel) override {
+         InfoLog(<< "PeerConnectionObserver::DataChannel(" << data_channel << ")");
+      };
+
+      void OnRenegotiationNeeded() override {
+         InfoLog(<< "PeerConnectionObserver::RenegotiationNeeded");
+      };
+
+      void OnIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState new_state) override {
+         InfoLog(<< "PeerConnectionObserver::IceConnectionChange(" << new_state << ")");
+      };
+
+      void OnIceGatheringChange(webrtc::PeerConnectionInterface::IceGatheringState new_state) override {
+         InfoLog(<< "PeerConnectionObserver::IceGatheringChange(" << new_state << ")");
+      };
+
+      void OnIceCandidate(const webrtc::IceCandidateInterface *candidate) override {
+         InfoLog(<< "PeerConnectionObserver::IceCandidate");
+      };
+};
+
+class CSDO : public webrtc::CreateSessionDescriptionObserver {
+   public:
+      CSDO() {}
+
+      void OnSuccess(webrtc::SessionDescriptionInterface *desc) override {
+         std::string sdp;
+         desc->ToString(&sdp);
+         InfoLog(<< "CreateSessionDescriptionObserver::OnSuccess: " << sdp);
+      };
+
+      void OnFailure(webrtc::RTCError error) override {
+         InfoLog(<< "CreateSessionDescriptionObserver::OnFailure" << error.message());
+      };
+};
+
 /*
  * Class:     org_resiprocate_android_basicmessage_SipStack
  * Method:    init
@@ -192,7 +253,52 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basicmessage_SipStack_init
 
    AndroidLogger *alog = new AndroidLogger();
    Log::initialize(Log::Cout, Log::Stack, "SIP", *alog);
+
+   // testing: try to create a a PeerConnectionFactory
+   // to verify access to the correct headers and shared objects
+   // from libwebrtc using the NDK prefab mechanism
+
+   InfoLog(<<"Trying to start webrtc threads...");
+   sleep(1);
+   std::unique_ptr<rtc::Thread> network_thread_ = std::unique_ptr<rtc::Thread>(rtc::Thread::Create());
+   std::unique_ptr<rtc::Thread> signaling_thread_ = std::unique_ptr<rtc::Thread>(rtc::Thread::Create());
+   std::unique_ptr<rtc::Thread> worker_thread_ = std::unique_ptr<rtc::Thread>(rtc::Thread::Create());
+   network_thread_->SetName("Net", NULL);
+   signaling_thread_->SetName("Signaling", NULL);
+   worker_thread_->SetName("Worker", NULL);
+   network_thread_->Start();    // Must start before being passed to
+   signaling_thread_->Start();  // PeerConnectionFactory
+   worker_thread_->Start();
+
+   InfoLog(<<"Trying to create PeerConnectionFactory");
+   sleep(1);
+   rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> peer_connection_factory;
+
+   webrtc::PeerConnectionFactoryDependencies dependencies;
+   dependencies.network_thread = network_thread_.get();
+   dependencies.signaling_thread = signaling_thread_.get();
+   dependencies.worker_thread = worker_thread_.get();
+   peer_connection_factory = webrtc::CreateModularPeerConnectionFactory(std::move(dependencies));
    
+   if (!peer_connection_factory.get()) {
+      ErrLog( << "Could not create PeerConnectionFactory");
+   } else {
+      InfoLog( << "Successfully created PeerConnectionFactory");
+
+      InfoLog(<<"Trying to create a PeerConnection");
+      sleep(1);
+      webrtc::PeerConnectionInterface::RTCConfiguration configuration;
+      std::shared_ptr<PCO> pco = std::make_shared<PCO>();
+      webrtc::PeerConnectionDependencies _dependencies(pco.get());
+      rtc::scoped_refptr<webrtc::PeerConnectionInterface> peer_connection = peer_connection_factory->CreatePeerConnection(configuration, std::move(_dependencies));
+      rtc::scoped_refptr<CSDO> csdo = new rtc::RefCountedObject<CSDO>();
+      peer_connection->CreateOffer(csdo, webrtc::PeerConnectionInterface::RTCOfferAnswerOptions());
+
+      InfoLog(<<"CreateOffer invoked");
+      // sleep and allow the callbacks in csdo to be invoked from other threads
+      sleep(10);
+   }
+
    RegListener client;
    std::shared_ptr<MasterProfile> profile(new MasterProfile);
    std::unique_ptr<ClientAuthManager> clientAuth(new ClientAuthManager());

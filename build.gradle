@@ -15,12 +15,13 @@ android {
         versionCode 1
         versionName "1.0"
 
-        minSdkVersion 16
+        minSdkVersion 21
         targetSdkVersion 30
 
         externalNativeBuild {
             cmake {
                 arguments '-DANDROID_STL=c++_shared'
+                cppFlags "-DWEBRTC_POSIX"
             }
         }
     }
@@ -44,6 +45,7 @@ android {
     dependencies {
         implementation("com.android.ndk.thirdparty:openssl:1.1.1l-SNAPSHOT")
         implementation("org.resiprocate:resiprocate:1.13.0-SNAPSHOT")
+        implementation("org.webrtc:libwebrtc:1.0.0")
     }
 
     signingConfigs {
@@ -89,6 +91,11 @@ allprojects {
         mavenCentral()
         maven {
             url "${rootProject.buildDir}/../../ndkports/build/repository"
+        }
+        // FIXME - need to create this repo directory manually and put the
+        // libwebrtc.aar file in it:
+        maven {
+            url "${rootProject.buildDir}/../my-repo"
         }
     }
 }

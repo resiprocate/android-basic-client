@@ -7,6 +7,7 @@ cmake_minimum_required(VERSION 3.4.1)
 project(BasicPhone LANGUAGES C CXX)
 
 find_package(resiprocate REQUIRED CONFIG)
+find_package(libwebrtc REQUIRED CONFIG)
 
 # Specifies a library name, specifies whether the library is STATIC or
 # SHARED, and provides relative paths to the source code. You can
@@ -23,5 +24,5 @@ add_library( # Specifies the name of the library.
              # Provides a relative path to your source file(s).
              BasicPhone.cpp )
 
-target_link_libraries(BasicPhone resiprocate::dum resiprocate::resip resiprocate::rutil resiprocate::resipares)
+target_link_libraries(BasicPhone resiprocate::dum resiprocate::resip resiprocate::rutil resiprocate::resipares libwebrtc::jingle_peerconnection_so)
 
