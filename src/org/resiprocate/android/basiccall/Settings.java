@@ -1,4 +1,4 @@
-package org.resiprocate.android.basicmessage;
+package org.resiprocate.android.basiccall;
 
 import android.os.Bundle;
 import android.preference.PreferenceActivity;

@@ -1,4 +1,4 @@
-package org.resiprocate.android.basicmessage;
+package org.resiprocate.android.basiccall;
 
 public class SipStack {
 	

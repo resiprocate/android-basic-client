@@ -147,7 +147,7 @@ public:
 #ifdef __cplusplus
 extern "C" {
 #endif
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basicmessage_SipStack_sendMessage
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_sendMessage
   (JNIEnv *env, jobject jthis, jstring recipient, jstring body)
 {
    const char *_recipient = env->GetStringUTFChars(recipient, 0);
@@ -178,11 +178,11 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basicmessage_SipStack_sendMe
 }
 
 /*
- * Class:     org_resiprocate_android_basicmessage_SipStack
+ * Class:     org_resiprocate_android_basiccall_SipStack
  * Method:    init
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basicmessage_SipStack_init
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_init
   (JNIEnv *env, jobject jthis, jstring sipUser, jstring realm, jstring user, jstring password)
 {
    const char *_sipUser = env->GetStringUTFChars(sipUser, 0);
@@ -237,11 +237,11 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basicmessage_SipStack_init
 }
 
 /*
- * Class:     org_resiprocate_android_basicmessage_SipStack
+ * Class:     org_resiprocate_android_basiccall_SipStack
  * Method:    handleEvents
  * Signature: ()V
  */
-JNIEXPORT jlong JNICALL Java_org_resiprocate_android_basicmessage_SipStack_handleEvents
+JNIEXPORT jlong JNICALL Java_org_resiprocate_android_basiccall_SipStack_handleEvents
   (JNIEnv *env, jobject)
 {
    // This is used by callbacks:
@@ -269,11 +269,11 @@ class MyShutdownHandler : public DumShutdownHandler
 };
 
 /*
- * Class:     org_resiprocate_android_basicmessage_SipStack
+ * Class:     org_resiprocate_android_basiccall_SipStack
  * Method:    done
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basicmessage_SipStack_done
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_done
   (JNIEnv *env, jobject)
 {
    // May be used in some callbacks during shutdown:
@@ -311,11 +311,11 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basicmessage_SipStack_done
 }
 
 /*
- * Class:     org_resiprocate_android_basicmessage_SipStack
+ * Class:     org_resiprocate_android_basiccall_SipStack
  * Method:    setMessageHandler
- * Signature: (Lorg/resiprocate/android/basicmessage/MessageHandler;)V
+ * Signature: (Lorg/resiprocate/android/basiccall/MessageHandler;)V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basicmessage_SipStack_setMessageHandler
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_setMessageHandler
   (JNIEnv *env, jobject _this, jobject _message_handler)
 {
    message_handler = env->NewGlobalRef(_message_handler);

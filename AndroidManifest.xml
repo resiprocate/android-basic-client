@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="org.resiprocate.android.basicmessage"
+    package="org.resiprocate.android.basiccall"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -14,7 +14,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="org.resiprocate.android.basicmessage.MainActivity"
+            android:name="org.resiprocate.android.basiccall.MainActivity"
             android:launchMode="singleTop"
             android:label="@string/app_name" >
             <intent-filter>
@@ -24,14 +24,14 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="org.resiprocate.android.basicmessage.Settings"
+            android:name="org.resiprocate.android.basiccall.Settings"
             android:label="@string/app_name" >
         </activity>
         <service
       		android:name=".SipService"
       		android:process=":remote">
       		<intent-filter>
-        		<action	android:name="org.resiprocate.android.basicmessage.SipService" />
+        		<action	android:name="org.resiprocate.android.basiccall.SipService" />
       		</intent-filter>
     	</service>
     </application>

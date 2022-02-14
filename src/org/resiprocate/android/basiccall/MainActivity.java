@@ -1,4 +1,4 @@
-package org.resiprocate.android.basicmessage;
+package org.resiprocate.android.basiccall;
 
 import java.util.logging.Logger;
 
@@ -51,7 +51,7 @@ public class MainActivity extends Activity {
 		});
 				
 		Intent intent = new Intent(this, SipService.class);
-		intent.setPackage("org.resiprocate.android.basicmessage");
+		intent.setPackage("org.resiprocate.android.basiccall");
 		startService(intent);
 
 		bindService(intent,

@@ -1,4 +1,4 @@
-package org.resiprocate.android.basicmessage;
+package org.resiprocate.android.basiccall;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -49,7 +49,7 @@ public class SipService extends Service {
 	private static final long INITIAL_DELAY = 50L;
 	private static final long STACK_INTERVAL = 50L;
 
-	private static final String ALARM_ACTION = "org.resiprocate.android.basicmessage.SipService.WAKEUP";
+	private static final String ALARM_ACTION = "org.resiprocate.android.basiccall.SipService.WAKEUP";
 	
 	AlarmManager alarmManager;
 	private PendingIntent pendingIntent;
