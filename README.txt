@@ -45,6 +45,8 @@ Notes:
   this won't clash with a port in use by any other app
 * reSIProcate's logging messages are logged to the Android
   logging facility and they can be monitoring with `adb logcat`
+* To create more API skeleton code, use javah, e.g:
+  javah -o jni/foo.cpp -cp src org.resiprocate.android.basiccall.SipCall
 
 Debugging tips
 --------------
