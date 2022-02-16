@@ -21,7 +21,7 @@ add_library( # Specifies the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             BasicPhone.cpp )
+             BasicPhone.cpp basicClientCall.cxx basicClientCmdLineParser.cxx basicClient.cxx basicClientUserAgent.cxx CommandLineParser.cxx RegEventClient.cxx UserAgent.cxx)
 
 target_link_libraries(BasicPhone resiprocate::dum resiprocate::resip resiprocate::rutil resiprocate::resipares)
 

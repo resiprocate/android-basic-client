@@ -9,11 +9,15 @@ public class SipStack {
 	public native long handleEvents();
 	
 	public native void setMessageHandler(MessageHandler messageHandler);
+
+	public native void setSipCallFactory(SipCallFactory sipCallFactory);
 	
 	public native void done();
 	
 	// SIP stack communication:
-	
+
 	public native void sendMessage(String recipient, String body);
+
+	public native void call(String recipient);
 
 }

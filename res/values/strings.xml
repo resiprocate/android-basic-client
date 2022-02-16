@@ -6,6 +6,7 @@
     <string name="action_exit">Exit</string>
     <string name="recipient">Recipient</string>
     <string name="send">Send</string>
+    <string name="call">Call</string>
     <string name="msg_text">Message body:</string>
 
 </resources>

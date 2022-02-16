@@ -121,6 +121,7 @@ public class SipService extends Service {
 		configure();
 		mSipStack.init("sip:" + mSipAddr, mSipRealm, mSipUser, mSipPassword);
 		mSipStack.setMessageHandler(mh);
+		mSipStack.setSipCallFactory(new MySipCallFactory());
 		setAlarms(INITIAL_DELAY);
 	}
 
@@ -152,6 +153,13 @@ public class SipService extends Service {
 		public void sendMessage(String recipient, String body) {
 			synchronized(mSipStack) {
 				mSipStack.sendMessage("sip:" + recipient, body);
+			}
+		}
+		@Override
+		public void call(String recipient) {
+			logger.info("trying to call: " + recipient);
+			synchronized(mSipStack) {
+				mSipStack.call("sip:" + recipient);
 			}
 		}
 	};

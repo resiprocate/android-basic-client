@@ -24,6 +24,8 @@ public:
    virtual void terminateCall();
    virtual void timerExpired();
 
+   virtual void setLocalSdp(const Data& localSdp);
+
 protected:
    friend class BasicClientUserAgent;
 
@@ -89,6 +91,7 @@ private:
    bool isStaleFork(const resip::DialogId& dialogId);
    resip::DialogId mUACConnectedDialogId;
 
+   std::shared_ptr<SdpContents> mLocalSdp;
    void makeOffer(SdpContents& offer);
 };
  

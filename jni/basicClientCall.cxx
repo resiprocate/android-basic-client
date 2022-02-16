@@ -125,10 +125,24 @@ BasicClientCall::isStaleFork(const DialogId& dialogId)
    return (!mUACConnectedDialogId.getCallId().empty() && dialogId != mUACConnectedDialogId);
 }
 
+void
+BasicClientCall::setLocalSdp(const Data& localSdp)
+{
+   HeaderFieldValue hfv(localSdp.data(), localSdp.size());
+   Mime type("application", "sdp");
+   mLocalSdp.reset(new SdpContents(hfv, type));
+}
+
 void 
 BasicClientCall::makeOffer(SdpContents& offer)
 {
-   static Data txt("v=0\r\n"
+   if(mLocalSdp)
+   {
+      offer = *mLocalSdp;
+   }
+   else
+   {
+      static Data txt("v=0\r\n"
                    "o=- 0 0 IN IP4 0.0.0.0\r\n"
                    "s=basicClient\r\n"
                    "c=IN IP4 0.0.0.0\r\n"  
@@ -138,11 +152,12 @@ BasicClientCall::makeOffer(SdpContents& offer)
                    "a=rtpmap:101 telephone-event/8000\r\n"
                    "a=fmtp:101 0-15\r\n");
 
-   static HeaderFieldValue hfv(txt.data(), txt.size());
-   static Mime type("application", "sdp");
-   static SdpContents offerSdp(hfv, type);
+      static HeaderFieldValue hfv(txt.data(), txt.size());
+      static Mime type("application", "sdp");
+      static SdpContents offerSdp(hfv, type);
 
-   offer = offerSdp;
+      offer = offerSdp;
+   }
 
    // Set sessionid and version for this offer
    UInt64 currentTime = Timer::getTimeMicroSec();

@@ -41,6 +41,7 @@ public:
    bool process(int timeoutMs);  // returns false when shutdown is complete and process should no longer be called
 
    DialogUsageManager& getDialogUsageManager() { return *mDum; }
+   std::shared_ptr<UserProfile> getUserProfile() { return mProfile; }
    std::shared_ptr<UserProfile> getIncomingUserProfile(const SipMessage& msg) { return mProfile; } // This test program only uses the one global Master Profile - just return it
       
 protected:

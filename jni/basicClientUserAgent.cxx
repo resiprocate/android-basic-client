@@ -132,13 +132,14 @@ BasicClientUserAgent::BasicClientUserAgent(int argc, char** argv) :
    mRegistrationRetryDelayTime(0),
    mCurrentNotifyTimerId(0)
 {
-   Log::initialize(mLogType, mLogLevel, argv[0]);
+   //Log::initialize(mLogType, mLogLevel, argv[0]);
 
    if(mHostFileLookupOnlyDnsMode)
    {
       AresDns::enableHostFileLookupOnlyMode(true);
    }
 
+   InfoLog(<<"adding transports");
    addTransport(UDP, mUdpPort);
    addTransport(TCP, mTcpPort);
 #if defined(USE_SSL)
@@ -151,6 +152,7 @@ BasicClientUserAgent::BasicClientUserAgent(int argc, char** argv) :
    // Disable Statistics Manager
    mStack->statisticsManagerEnabled() = false;
 
+   InfoLog(<<"configuring profile");
    // Supported Methods
    mProfile->clearSupportedMethods();
    mProfile->addSupportedMethod(INVITE);
@@ -228,10 +230,10 @@ BasicClientUserAgent::BasicClientUserAgent(int argc, char** argv) :
    mProfile->setMethodsParamEnabled(true);
 
    // Install Sdp Message Decorator
-   mProfile->setOutboundDecorator(std::make_shared<SdpMessageDecorator>());
+   //mProfile->setOutboundDecorator(std::make_shared<SdpMessageDecorator>());
 
    // Other Profile Settings
-   mProfile->setUserAgent("basicClient/1.0");
+   mProfile->setUserAgent("basicClientAndroid/1.0");
    mProfile->setDefaultRegistrationTime(mRegisterDuration);
    mProfile->setDefaultRegistrationRetryTime(120);
    if(!mContact.host().empty())
@@ -287,6 +289,7 @@ BasicClientUserAgent::BasicClientUserAgent(int argc, char** argv) :
 
    resip::Timer::TcpConnectTimeout = 10000;
 
+   InfoLog(<<"configuring DialogUsageManager");
    // Install Managers
    mDum->setClientAuthManager(std::unique_ptr<ClientAuthManager>(new ClientAuthManager));
    mDum->setKeepAliveManager(std::unique_ptr<KeepAliveManager>(new KeepAliveManager));
@@ -334,6 +337,7 @@ BasicClientUserAgent::startup()
 
    if (mRegisterDuration)
    {
+      mAor = Uri("sip:test@127.0.0.1");
       InfoLog (<< "register for " << mAor);
       mDum->send(mDum->makeRegistration(NameAddr(mAor)));
    }

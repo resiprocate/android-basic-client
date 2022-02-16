@@ -49,6 +49,27 @@ public class MainActivity extends Activity {
 				
 			}
 		});
+
+		Button buttonCall = (Button) findViewById(R.id.ButtonCall);
+		buttonCall.setOnClickListener(new Button.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+
+				EditText recipientField = (EditText)findViewById(R.id.recipient);
+
+				logger.info("trying to call....");
+				try {
+					mSipStackRemote.call(
+							recipientField.getText().toString());
+					logger.info("done call");
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					logger.severe("failed call");
+					e.printStackTrace();
+				}
+
+			}
+		});
 				
 		Intent intent = new Intent(this, SipService.class);
 		intent.setPackage("org.resiprocate.android.basiccall");
@@ -120,6 +141,7 @@ public class MainActivity extends Activity {
 	        // Following the example above for an AIDL interface,
 	        // this gets an instance of the IRemoteInterface, which we can use to call on the service
 	        mSipStackRemote = SipStackRemote.Stub.asInterface(service);
+		logger.info("Service is bound");
 	    }
 
 	    // Called when the connection with the service disconnects unexpectedly
