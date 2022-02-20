@@ -155,7 +155,7 @@ public:
 extern "C" {
 #endif
 
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_call
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipStack_call
   (JNIEnv *env, jobject jthis, jstring recipient)
 {
    const char *_recipient = env->GetStringUTFChars(recipient, 0);
@@ -191,7 +191,7 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_call
    env->ReleaseStringUTFChars(recipient, _recipient);
 }
 
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_sendMessage
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipStack_sendMessage
   (JNIEnv *env, jobject jthis, jstring recipient, jstring body)
 {
    const char *_recipient = env->GetStringUTFChars(recipient, 0);
@@ -222,11 +222,11 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_sendMessa
 }
 
 /*
- * Class:     org_resiprocate_android_basiccall_SipStack
+ * Class:     org_resiprocate_android_basicclient_SipStack
  * Method:    init
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_init
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipStack_init
   (JNIEnv *env, jobject jthis, jstring sipUser, jstring realm, jstring user, jstring password)
 {
    const char *_sipUser = env->GetStringUTFChars(sipUser, 0);
@@ -290,11 +290,11 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_init
 }
 
 /*
- * Class:     org_resiprocate_android_basiccall_SipStack
+ * Class:     org_resiprocate_android_basicclient_SipStack
  * Method:    handleEvents
  * Signature: ()V
  */
-JNIEXPORT jlong JNICALL Java_org_resiprocate_android_basiccall_SipStack_handleEvents
+JNIEXPORT jlong JNICALL Java_org_resiprocate_android_basicclient_SipStack_handleEvents
   (JNIEnv *env, jobject)
 {
    // This is used by callbacks:
@@ -328,11 +328,11 @@ class MyShutdownHandler : public DumShutdownHandler
 };
 
 /*
- * Class:     org_resiprocate_android_basiccall_SipStack
+ * Class:     org_resiprocate_android_basicclient_SipStack
  * Method:    done
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_done
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipStack_done
   (JNIEnv *env, jobject)
 {
    // May be used in some callbacks during shutdown:
@@ -370,16 +370,16 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_done
 }
 
 /*
- * Class:     org_resiprocate_android_basiccall_SipStack
+ * Class:     org_resiprocate_android_basicclient_SipStack
  * Method:    setSipCallFactory
- * Signature: (Lorg/resiprocate/android/basiccall/SipCallFactory;)V
+ * Signature: (Lorg/resiprocate/android/basicclient/SipCallFactory;)V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_setSipCallFactory
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipStack_setSipCallFactory
   (JNIEnv *env, jobject _this, jobject _sip_call_factory)
 {
    sip_call_factory = env->NewGlobalRef(_sip_call_factory);
    jclass objclass = env->GetObjectClass(sip_call_factory);
-   create_sip_call_method = env->GetMethodID(objclass, "createSipCall", "(JLjava/lang/String;)Lorg/resiprocate/android/basiccall/SipCall;");
+   create_sip_call_method = env->GetMethodID(objclass, "createSipCall", "(JLjava/lang/String;)Lorg/resiprocate/android/basicclient/SipCall;");
    if(create_sip_call_method == 0){
       ErrLog( << "could not get method id\n");
       return;
@@ -387,11 +387,11 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_setSipCal
 }
 
 /*
- * Class:     org_resiprocate_android_basiccall_SipStack
+ * Class:     org_resiprocate_android_basicclient_SipStack
  * Method:    setMessageHandler
- * Signature: (Lorg/resiprocate/android/basiccall/MessageHandler;)V
+ * Signature: (Lorg/resiprocate/android/basicclient/MessageHandler;)V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_setMessageHandler
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipStack_setMessageHandler
   (JNIEnv *env, jobject _this, jobject _message_handler)
 {
    message_handler = env->NewGlobalRef(_message_handler);
@@ -407,11 +407,11 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipStack_setMessag
 
 
 /*
- * Class:     org_resiprocate_android_basiccall_SipCall
+ * Class:     org_resiprocate_android_basicclient_SipCall
  * Method:    initiate
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipCall_initiate
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipCall_initiate
   (JNIEnv *env, jobject _this)
 {
    jclass _class = env->GetObjectClass(_this);
@@ -436,11 +436,11 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipCall_initiate
 }
 
 /*
- * Class:     org_resiprocate_android_basiccall_SipCall
+ * Class:     org_resiprocate_android_basicclient_SipCall
  * Method:    cancel
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipCall_cancel
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipCall_cancel
   (JNIEnv *env, jobject _this)
 {
    InfoLog(<<"cancel() invoked");
@@ -453,11 +453,11 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipCall_cancel
 }
 
 /*
- * Class:     org_resiprocate_android_basiccall_SipCall
+ * Class:     org_resiprocate_android_basicclient_SipCall
  * Method:    reject
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipCall_reject
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipCall_reject
   (JNIEnv *env, jobject _this)
 {
    InfoLog(<<"reject() invoked");
@@ -470,22 +470,22 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipCall_reject
 }
 
 /*
- * Class:     org_resiprocate_android_basiccall_SipCall
+ * Class:     org_resiprocate_android_basicclient_SipCall
  * Method:    answer
  * Signature: ()V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipCall_answer
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipCall_answer
   (JNIEnv *env, jobject _this)
 {
    InfoLog(<<"answer() invoked");
 }
 
 /*
- * Class:     org_resiprocate_android_basiccall_SipCall
+ * Class:     org_resiprocate_android_basicclient_SipCall
  * Method:    provideOffer
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipCall_provideOffer
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipCall_provideOffer
   (JNIEnv *env, jobject _this, jstring offer)
 {
    const char *_offer = env->GetStringUTFChars(offer, 0);
@@ -508,11 +508,11 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipCall_provideOff
 }
 
 /*
- * Class:     org_resiprocate_android_basiccall_SipCall
+ * Class:     org_resiprocate_android_basicclient_SipCall
  * Method:    provideAnswer
  * Signature: (Ljava/lang/String;)V
  */
-JNIEXPORT void JNICALL Java_org_resiprocate_android_basiccall_SipCall_provideAnswer
+JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipCall_provideAnswer
   (JNIEnv *env, jobject _this, jstring answer)
 {
    const char *_answer = env->GetStringUTFChars(answer, 0);

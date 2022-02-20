@@ -1,4 +1,4 @@
-package org.resiprocate.android.basiccall;
+package org.resiprocate.android.basicclient;
 
 public abstract class SipCall {
 

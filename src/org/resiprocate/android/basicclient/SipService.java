@@ -1,4 +1,4 @@
-package org.resiprocate.android.basiccall;
+package org.resiprocate.android.basicclient;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -49,7 +49,7 @@ public class SipService extends Service {
 	private static final long INITIAL_DELAY = 50L;
 	private static final long STACK_INTERVAL = 50L;
 
-	private static final String ALARM_ACTION = "org.resiprocate.android.basiccall.SipService.WAKEUP";
+	private static final String ALARM_ACTION = "org.resiprocate.android.basicclient.SipService.WAKEUP";
 	
 	AlarmManager alarmManager;
 	private PendingIntent pendingIntent;
@@ -169,10 +169,17 @@ public class SipService extends Service {
 		public void onMessage(String sender, String body) {
 			logger.info("Got message from SIP stack: " + body);
 
-			// TODO: send the SIP MESSAGE body in a Broadcast?
+			// FIXME: is SMS_RECEIVED_ACTION best?  Check names of Extras.
+			Intent messageIntent = new Intent(android.provider.Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
+			messageIntent.putExtra("sender", sender);
+			messageIntent.putExtra("body", body);
+			sendBroadcast(messageIntent);
 			
 			// Make a notification - one of the less elegant things
 			// to do in Android programming
+
+			/* FIXME - move this code from this library to the app
+
 			Uri soundUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
 			NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 			int icon = R.drawable.ic_launcher;
@@ -195,7 +202,7 @@ public class SipService extends Service {
 			Notification notification = mBuilder.getNotification();
 
 			int SERVER_DATA_RECEIVED = 1;
-			notificationManager.notify(SERVER_DATA_RECEIVED, notification);
+			notificationManager.notify(SERVER_DATA_RECEIVED, notification);*/
 
 		}
 	};

@@ -1,5 +1,6 @@
 buildscript {
     repositories {
+        mavenLocal()
         google()
         mavenCentral()
     }
@@ -8,7 +9,11 @@ buildscript {
     }
 }
 
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
+apply plugin: 'maven-publish'
+
+group 'org.resiprocate.android'
+version '1.0'
 
 android {
     defaultConfig {
@@ -46,19 +51,8 @@ android {
         implementation("org.resiprocate:resiprocate:1.13.0-SNAPSHOT")
     }
 
-    signingConfigs {
-        release {
-            storeFile file(System.getenv('HOME') + '/.keystore')
-            storePassword 'unset'
-            keyAlias System.getenv('SIGNING_KEY')
-            keyPassword 'unset'
-        }
-    }
-
     buildTypes {
-        release {
-            signingConfig signingConfigs.release
-        }
+        distributable.initWith(buildTypes.release)
     }
 
     externalNativeBuild {
@@ -85,10 +79,27 @@ android {
 
 allprojects {
     repositories {
+        mavenLocal()
         google()
         mavenCentral()
         maven {
             url "${rootProject.buildDir}/../../ndkports/build/repository"
+        }
+    }
+}
+
+publishing {
+    repositories {
+        maven {
+            url "${rootProject.buildDir}/../build/repository"
+        }
+    }
+    publications {
+        maven(MavenPublication) {
+            groupId 'org.resiprocate.android'
+            artifactId 'android-basic-client'
+            version '1.0'
+            artifact("$buildDir/outputs/aar/android-basic-client-distributable.aar")
         }
     }
 }
