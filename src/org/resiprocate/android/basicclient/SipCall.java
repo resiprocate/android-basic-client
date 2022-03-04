@@ -19,14 +19,18 @@ public abstract class SipCall {
 	public abstract void onConnected();
 	public abstract void onFailure(int code, String reason);
 
-	public abstract void onIncoming();
+	public abstract void onIncoming(String caller);
 	public native void reject();
 	public native void answer();
+
+	public abstract void onTerminated(String reason);
 
 	public abstract void onOfferRequired();
 	public native void provideOffer(String offer);
 
 	public abstract void onAnswerRequired(String offer);
 	public native void provideAnswer(String answer);
+
+	public abstract void onAnswer(String answer);
 	
 }

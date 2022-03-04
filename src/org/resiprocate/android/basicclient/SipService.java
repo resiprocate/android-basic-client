@@ -22,6 +22,8 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.os.RemoteCallbackList;
+import android.os.RemoteException;
 import android.os.SystemClock;
 import android.preference.PreferenceManager;
 
@@ -33,6 +35,10 @@ public class SipService extends Service {
 	String mSipRealm;
 	String mSipUser;
 	String mSipPassword;
+
+	Handler mHandler;
+
+	final RemoteCallbackList<SipUserRemote> mCallbacks = new RemoteCallbackList<SipUserRemote>();
 
 	public SipService() {
 		System.loadLibrary("c++_shared");
@@ -47,7 +53,7 @@ public class SipService extends Service {
 
 	final static String TAG = "SipService";
 	private static final long INITIAL_DELAY = 50L;
-	private static final long STACK_INTERVAL = 50L;
+	private static final long STACK_INTERVAL = 10L;
 
 	private static final String ALARM_ACTION = "org.resiprocate.android.basicclient.SipService.WAKEUP";
 	
@@ -56,6 +62,8 @@ public class SipService extends Service {
 	private PendingIntent pendingIntentWakeup;
 
 	SipStack mSipStack = null;
+
+	SipCall mSipCall = null;
 
 	private void setAlarms(long delay) {
 		alarmManager.set( AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + STACK_INTERVAL, pendingIntent );
@@ -97,7 +105,6 @@ public class SipService extends Service {
 	public void onCreate() {
 		super.onCreate();
 		logger.info("Service starting");
-		Handler handler; // Handler for the separate Thread
 
 		HandlerThread handlerThread = new HandlerThread("MyNewThread");
 		handlerThread.start();
@@ -106,11 +113,11 @@ public class SipService extends Service {
 		// NOTE: This call will block until the HandlerThread gets control and initializes its Looper
 		Looper looper = handlerThread.getLooper();
 		// Create a handler for the service
-		handler = new Handler(looper);
+		mHandler = new Handler(looper);
 		IntentFilter filter = new IntentFilter();
 		filter.addAction(ALARM_ACTION);
 		filter.addDataScheme("foo");
-		registerReceiver(alarmReceiver, filter, null, handler);
+		registerReceiver(alarmReceiver, filter, null, mHandler);
 		
 		alarmManager = (AlarmManager)(this.getSystemService( Context.ALARM_SERVICE ));
 		pendingIntent = PendingIntent.getBroadcast( this, 0, new Intent(ALARM_ACTION, Uri.parse("foo:normal")), 0);
@@ -121,7 +128,7 @@ public class SipService extends Service {
 		configure();
 		mSipStack.init("sip:" + mSipAddr, mSipRealm, mSipUser, mSipPassword);
 		mSipStack.setMessageHandler(mh);
-		mSipStack.setSipCallFactory(new MySipCallFactory());
+		mSipStack.setSipCallFactory(new MySipCallFactory(mCallbacks, this));
 		setAlarms(INITIAL_DELAY);
 	}
 
@@ -150,6 +157,10 @@ public class SipService extends Service {
 	
 	private final SipStackRemote.Stub mBinder = new SipStackRemote.Stub() {
 		@Override
+		public void registerUser(SipUserRemote u) {
+			mCallbacks.register(u);
+		}
+		@Override
 		public void sendMessage(String recipient, String body) {
 			synchronized(mSipStack) {
 				mSipStack.sendMessage("sip:" + recipient, body);
@@ -162,12 +173,36 @@ public class SipService extends Service {
 				mSipStack.call("sip:" + recipient);
 			}
 		}
+		@Override
+		public void provideOffer(String offer) {
+			logger.info("providing offer: " + offer);
+			synchronized(mSipCall) {
+				mSipCall.provideOffer(offer);
+			}
+		}
+		@Override
+		public void provideAnswer(String answer) {
+			logger.info("providing answer: " + answer);
+			synchronized(mSipCall) {
+				mSipCall.provideAnswer(answer);
+			}
+		}
 	};
 	
 	private final MessageHandler mh = new MessageHandler() {
 		@Override
 		public void onMessage(String sender, String body) {
 			logger.info("Got message from SIP stack: " + body);
+
+			int callbackCount = mCallbacks.beginBroadcast();
+			for(int i = 0; i < callbackCount; i++) {
+				try {
+					mCallbacks.getBroadcastItem(i).onMessage(sender, body);
+				} catch (RemoteException ex) {
+					logger.throwing("MessageHandler", "onMessage", ex);
+				}
+			}
+			mCallbacks.finishBroadcast();
 
 			// FIXME: is SMS_RECEIVED_ACTION best?  Check names of Extras.
 			Intent messageIntent = new Intent(android.provider.Telephony.Sms.Intents.SMS_RECEIVED_ACTION);
@@ -206,4 +241,8 @@ public class SipService extends Service {
 
 		}
 	};
+
+	void onNewSipCall(SipCall sipCall) {
+		mSipCall = sipCall;
+	}
 }

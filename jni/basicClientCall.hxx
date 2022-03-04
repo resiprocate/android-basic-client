@@ -11,6 +11,8 @@
 
 #include "basicClientUserAgent.hxx"
 
+#include <jni.h>
+
 namespace resip
 {
 
@@ -19,6 +21,7 @@ class BasicClientCall : public AppDialogSet
 public:
    BasicClientCall(BasicClientUserAgent& userAgent);
    virtual ~BasicClientCall();
+   void setupJni(JNIEnv *env, jobject sipStack, jobject sipCall);
    
    virtual void initiateCall(const Uri& target, std::shared_ptr<UserProfile> profile);
    virtual void terminateCall();
@@ -81,6 +84,9 @@ protected:
 
 private:       
    BasicClientUserAgent &mUserAgent;
+   JNIEnv *mJniEnv;
+   jobject mJniSipStack;
+   jobject mJniSipCall;
    resip::InviteSessionHandle mInviteSessionHandle;
    unsigned int mTimerExpiredCounter;
    bool mPlacedCall;
@@ -93,6 +99,10 @@ private:
 
    std::shared_ptr<SdpContents> mLocalSdp;
    void makeOffer(SdpContents& offer);
+
+   void callJniVoid(const char *methodName);
+   void callJniString(const char *methodName, const Data& val);
+   void callJniIntString(const char *methodName, const int val0, const Data& val1);
 };
  
 }

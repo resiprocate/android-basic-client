@@ -168,6 +168,7 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipStack_call
 
       DebugLog(<< "sip_call_factory: " << sip_call_factory << " create_sip_call_method: " << create_sip_call_method);
       jobject _sip_call = env->CallObjectMethod(sip_call_factory, create_sip_call_method, (jlong)_call, recipient);
+      _call->setupJni(env, jthis, _sip_call);
       jclass objclass = env->GetObjectClass(_sip_call);
 
       jmethodID on_offer_required_method = env->GetMethodID(objclass, "onOfferRequired", "()V");
@@ -306,7 +307,11 @@ JNIEXPORT jlong JNICALL Java_org_resiprocate_android_basicclient_SipStack_handle
    return clientStack->getTimeTillNextProcessMS();
    */
    InfoLog(<<"BasicClientUserAgent event loop");
-   basicUA->process(10);
+   try {
+      basicUA->process(3);
+   } catch(...) {
+      ErrLog(<<"unhandled exception");
+   }
    InfoLog(<<"BasicClientUserAgent event loop done");
    return 10; // FIXME
 }
@@ -428,6 +433,7 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipCall_initiate
       return;
    }
    _call = new BasicClientCall(*basicUA);
+   _call->setupJni(env, 0, _this); // FIXME - sipStack
    NameAddr target(_mPeer);
    _call->initiateCall(target.uri(), basicUA->getUserProfile());
    mBasicClientCall = (jlong)_call;
@@ -525,7 +531,8 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipCall_provideA
    BasicClientCall* _call = (BasicClientCall*)env->GetLongField(_this, mBasicClientCallFID);
 
    // FIXME - give the SDP answer to the BasicClientCall
-   //       - call accept
+   //       - call accept if necessary
+   _call->setLocalSdp(localSdp);
 }
 
 #ifdef __cplusplus

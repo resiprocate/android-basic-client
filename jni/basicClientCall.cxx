@@ -54,6 +54,9 @@ class CallTimer : public resip::DumCommand
 
 BasicClientCall::BasicClientCall(BasicClientUserAgent& userAgent) 
 : AppDialogSet(userAgent.getDialogUsageManager()),
+  mJniEnv(0),
+  mJniSipStack(0),
+  mJniSipCall(0),
   mUserAgent(userAgent),
   mTimerExpiredCounter(0),
   mPlacedCall(false),
@@ -64,7 +67,44 @@ BasicClientCall::BasicClientCall(BasicClientUserAgent& userAgent)
 
 BasicClientCall::~BasicClientCall()
 {
+   if(mJniEnv != 0)
+   {
+      mJniEnv->DeleteGlobalRef(mJniSipCall);
+      mJniEnv->DeleteGlobalRef(mJniSipStack);
+   }
    mUserAgent.unregisterCall(this);
+}
+
+void
+BasicClientCall::setupJni(JNIEnv *env, jobject sipStack, jobject sipCall)
+{
+   mJniEnv = env;
+   mJniSipStack = mJniEnv->NewGlobalRef(sipStack);
+   mJniSipCall = mJniEnv->NewGlobalRef(sipCall);
+}
+
+void
+BasicClientCall::callJniVoid(const char *methodName)
+{
+   jclass objclass = mJniEnv->GetObjectClass(mJniSipCall);
+   jmethodID method_id = mJniEnv->GetMethodID(objclass, methodName, "()V");
+   mJniEnv->CallObjectMethod(mJniSipCall, method_id);
+}
+
+void
+BasicClientCall::callJniString(const char *methodName, const Data& val)
+{
+   jclass objclass = mJniEnv->GetObjectClass(mJniSipCall);
+   jmethodID method_id = mJniEnv->GetMethodID(objclass, methodName, "(Ljava/lang/String;)V");
+   mJniEnv->CallObjectMethod(mJniSipCall, method_id, val.c_str());
+}
+
+void
+BasicClientCall::callJniIntString(const char *methodName, const int val0, const Data& val1)
+{
+   jclass objclass = mJniEnv->GetObjectClass(mJniSipCall);
+   jmethodID method_id = mJniEnv->GetMethodID(objclass, methodName, "(ILjava/lang/String;)V");
+   mJniEnv->CallObjectMethod(mJniSipCall, method_id, (jint)val0, val1.c_str());
 }
 
 void 
@@ -216,6 +256,7 @@ BasicClientCall::onNewSession(ServerInviteSessionHandle h, InviteSession::OfferA
           h->reject(481 /* Call/Transaction Does Not Exist */);
       }
    }
+   callJniString("onIncoming", msg.header(h_From).uri().getAor());
 }
 
 void
@@ -237,12 +278,15 @@ BasicClientCall::onFailure(ClientInviteSessionHandle h, const SipMessage& msg)
             break;
       }
    }
+
+   callJniIntString("onFailure", msg.header(h_StatusLine).statusCode(), msg.header(h_StatusLine).reason());
 }
 
 void
 BasicClientCall::onEarlyMedia(ClientInviteSessionHandle h, const SipMessage& msg, const SdpContents& sdp)
 {
    InfoLog(<< "onEarlyMedia: msg=" << msg.brief() << ", sdp=" << sdp);
+   callJniString("onAnswer", sdp.getBodyData());
 }
 
 void
@@ -257,6 +301,7 @@ BasicClientCall::onProvisional(ClientInviteSessionHandle h, const SipMessage& ms
       return;
    }
    InfoLog(<< "onProvisional: msg=" << msg.brief());
+   callJniIntString("onProgress", msg.header(h_StatusLine).statusCode(), msg.header(h_StatusLine).reason());
 }
 
 void
@@ -280,12 +325,22 @@ BasicClientCall::onConnected(ClientInviteSessionHandle h, const SipMessage& msg)
       // We already have a connected leg - end this one with a BYE
       h->end();
    }
+   if(msg.getContents())
+   {
+      callJniString("onAnswer", msg.getContents()->getBodyData());
+   }
+   callJniVoid("onConnected");
 }
 
 void
 BasicClientCall::onConnected(InviteSessionHandle h, const SipMessage& msg)
 {
    InfoLog(<< "onConnected: msg=" << msg.brief());
+   if(msg.getContents())
+   {
+      callJniString("onAnswer", msg.getContents()->getBodyData());
+   }
+   callJniVoid("onConnected");
 }
 
 void
@@ -355,6 +410,7 @@ BasicClientCall::onTerminated(InviteSessionHandle h, InviteSessionHandler::Termi
    {
       InfoLog(<< "onTerminated: reason=" << reasonData);
    }
+   callJniString("onTerminated", reasonData);
 }
 
 void
@@ -376,6 +432,7 @@ BasicClientCall::onAnswer(InviteSessionHandle h, const SipMessage& msg, const Sd
    InfoLog(<< "onAnswer: msg=" << msg.brief() << ", sdp=" << sdp);
 
    // Process Answer here
+   callJniString("onAnswer", sdp.getBodyData());
 }
 
 void
@@ -389,13 +446,17 @@ BasicClientCall::onOffer(InviteSessionHandle h, const SipMessage& msg, const Sdp
    }
    InfoLog(<< "onOffer: msg=" << msg.brief() << ", sdp=" << sdp);
 
+   callJniString("onAnswerRequired", sdp.getBodyData());
+
+   // JNI - commented out the code below, will be called asynchronously from the app
+
    // Provide Answer here - for test client just echo back same SDP as received for now
-   h->provideAnswer(sdp);
-   ServerInviteSession* uas = dynamic_cast<ServerInviteSession*>(h.get());
-   if(uas && !uas->isAccepted())
-   {
-      uas->accept();
-   }
+   //h->provideAnswer(sdp);
+   //ServerInviteSession* uas = dynamic_cast<ServerInviteSession*>(h.get());
+   //if(uas && !uas->isAccepted())
+   //{
+   //   uas->accept();
+   //}
 }
 
 void
@@ -409,11 +470,15 @@ BasicClientCall::onOfferRequired(InviteSessionHandle h, const SipMessage& msg)
    }
    InfoLog(<< "onOfferRequired: msg=" << msg.brief());
 
-   // Provide Offer Here
-   SdpContents offer;
-   makeOffer(offer);
+   callJniVoid("onOfferRequired");
 
-   h->provideOffer(offer);
+   // JNI - commented out the code below, will be called asynchronously from the app
+
+   // Provide Offer Here
+   //SdpContents offer;
+   //makeOffer(offer);
+
+   //h->provideOffer(offer);
 }
 
 void
@@ -461,6 +526,7 @@ BasicClientCall::onRemoteSdpChanged(InviteSessionHandle h, const SipMessage& msg
    InfoLog(<< "onRemoteSdpChanged: msg=" << msg << ", sdp=" << sdp);
 
    // Process SDP Answer here
+   callJniString("onAnswerRequired", sdp.getBodyData());
 }
 
 void

@@ -41,6 +41,10 @@ using namespace std;
 
 #define RESIPROCATE_SUBSYSTEM Subsystem::TEST
 
+// uncomment to avoid using epoll
+#define POLL_MECHANISM 0 // uses default
+//#define POLL_MECHANISM "fdset"
+
 static unsigned int MaxRegistrationRetryTime = 1800;              // RFC5626 section 4.5 default
 static unsigned int BaseRegistrationRetryTimeAllFlowsFailed = 30; // RFC5626 section 4.5 default
 //static unsigned int BaseRegistrationRetryTime = 90;               // RFC5626 section 4.5 default
@@ -121,7 +125,7 @@ BasicClientUserAgent::BasicClientUserAgent(int argc, char** argv) :
 #else
    mSecurity(0),
 #endif
-   mPollGrp(FdPollGrp::create()),  // Will create EPoll implementation if available, otherwise FdPoll
+   mPollGrp(FdPollGrp::create(POLL_MECHANISM)),  // Will create EPoll implementation if available, otherwise FdPoll
    mInterruptor(new EventThreadInterruptor(*mPollGrp)),
    mStack(new SipStack(mSecurity, DnsStub::EmptyNameserverList, mInterruptor, false, 0, 0, mPollGrp)),
    mStackThread(new EventStackThread(*mStack, *mInterruptor, *mPollGrp)),
