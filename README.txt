@@ -1,6 +1,5 @@
 
-This is a basic Android app demonstrating how to use reSIProcate on
-Android.  It sends a text message using the SIP MESSAGE method.
+This is an Android library for using reSIProcate on Android.
 
 You must have the Android SDK, the NDK and a recent version of Gradle.
 
@@ -8,7 +7,7 @@ You must have the Android SDK, the NDK and a recent version of Gradle.
 
       git clone https://github.com/resiprocate/resiprocate.git
       git clone https://github.com/resiprocate/ndkports.git
-      git clone https://github.com/resiprocate/android-demo-message.git
+      git clone https://github.com/resiprocate/android-basic-client.git
 
 2. Put a reSIProcate tarball into /tmp
 
@@ -20,29 +19,25 @@ You must have the Android SDK, the NDK and a recent version of Gradle.
 
       cd ../ndkports
       git checkout pocock/resiprocate
+      export PATH=/opt/gradle-7.3.3/bin/:$PATH
+      export ANDROID_SDK_ROOT=~/Android/Sdk/
       gradle -PndkPath=/home/daniel/Android/Sdk/ndk/23.1.7779620 release -x test
 
-4. Build android-demo-message:
+4. Build android-basic-client
 
-      cd ../android-demo-message
-      gradle assembleDebug
+      cd ../android-basic-client
+      export PATH=/opt/gradle-7.3.3/bin/:$PATH
+      export ANDROID_SDK_ROOT=~/Android/Sdk/
+      gradle -PndkPath=/home/daniel/Android/Sdk/ndk/23.1.7779620 assemble publishToMavenLocal -x test
 
-5. Deploy the APK file to a phone,
+Now you have a library that you can include in your app.
 
-   adb install ./build/outputs/apk/debug/android-demo-message-debug.apk
-
-Now you have an app that you can run on Android
+The instructions for your app show the next steps to build the app
+and deploy it to a phone.
 
 Notes:
-* the recipient field must include the sip: prefix
-* sender address is hard coded
-* the stack is reset after each message
-* can't receive messages yet
 * discovery of DNS servers from system properties net.dns1 and net.dns2
 * if you have DNS problems, try sending to an IP address
-* it always uses UDP as the transport
-* it binds to a fixed source port defined in the code, hopefully
-  this won't clash with a port in use by any other app
 * reSIProcate's logging messages are logged to the Android
   logging facility and they can be monitoring with `adb logcat`
 * To create more API skeleton code, use javah, e.g:
