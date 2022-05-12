@@ -66,9 +66,17 @@ public class SipService extends Service {
 	SipCall mSipCall = null;
 
 	private void setAlarms(long delay) {
-		alarmManager.set( AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + STACK_INTERVAL, pendingIntent );
+		// https://developer.android.com/reference/android/app/AlarmManager#set(int,%20long,%20android.app.PendingIntent)
+		// set(..) does not provide an exact delay since API level 19
+		// setExact(..) requires extra permissions since API level 31
+		//alarmManager.set( AlarmManager.ELAPSED_REALTIME, SystemClock.elapsedRealtime() + STACK_INTERVAL, pendingIntent );
 		// Make sure we get woken up again if the phone sleeps:
-		alarmManager.set( AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + delay, pendingIntentWakeup );		
+		//alarmManager.set( AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + delay, pendingIntentWakeup );
+		mHandler.postDelayed(new Runnable() {
+			public void run() {
+				runEventLoop();
+			}
+		}, delay);
 	}
 	
 	private void cancelAlarms() {
