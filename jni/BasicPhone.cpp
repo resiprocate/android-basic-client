@@ -306,13 +306,13 @@ JNIEXPORT jlong JNICALL Java_org_resiprocate_android_basicclient_SipStack_handle
    while(clientDum->process());
    return clientStack->getTimeTillNextProcessMS();
    */
-   InfoLog(<<"BasicClientUserAgent event loop");
+   //StackLog(<<"BasicClientUserAgent event loop");
    try {
       basicUA->process(3);
    } catch(...) {
       ErrLog(<<"unhandled exception");
    }
-   InfoLog(<<"BasicClientUserAgent event loop done");
+   //StackLog(<<"BasicClientUserAgent event loop done");
    return 10; // FIXME
 }
 
