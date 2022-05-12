@@ -336,8 +336,8 @@ BasicClientUserAgent::~BasicClientUserAgent()
 void
 BasicClientUserAgent::startup()
 {
-   mStack->run();
-   mStackThread->run(); 
+   //mStack->run(); // starts threads managed by the stack
+   //mStackThread->run(); // starts thread for the stack itself
 
    if (mRegisterDuration)
    {
@@ -408,7 +408,8 @@ BasicClientUserAgent::process(int timeoutMs)
          mDum->shutdown(this);
          mDumShutdownRequested = false;
       }
-      mDum->process(timeoutMs);
+      mStack->process(timeoutMs);
+      while(mDum->process(timeoutMs)) {};
       return true;
    }
    return false;
