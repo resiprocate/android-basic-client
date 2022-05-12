@@ -84,7 +84,6 @@ protected:
 
 private:       
    BasicClientUserAgent &mUserAgent;
-   JNIEnv *mJniEnv;
    jobject mJniSipStack;
    jobject mJniSipCall;
    resip::InviteSessionHandle mInviteSessionHandle;

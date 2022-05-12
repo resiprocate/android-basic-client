@@ -52,9 +52,75 @@ class CallTimer : public resip::DumCommand
 };
 }
 
+/* JNI / JVM helper code
+ * This is a very crude solution right now,
+ * we need a generalized solution with a new header file
+ * for using JNI with C++ and reSIProcate
+ */
+
+static const jint jniVersion = JNI_VERSION_1_6;
+JavaVM *jvm;
+
+// Called by the JVM when we are loaded
+JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved)
+{
+   jvm = vm;
+   return jniVersion;
+}
+
+// Returns a JNIEnv for this thread,
+// returns NULL if current thread is detached.
+JNIEnv* GetEnv() {
+   void* env = nullptr;
+   jint status = jvm->GetEnv(&env, jniVersion);
+   resip_assert((env != nullptr) && (status == JNI_OK));
+   resip_assert((env == nullptr) && (status == JNI_EDETACHED));
+   return reinterpret_cast<JNIEnv*>(env);
+}
+
+static std::string GetThreadId() {
+   char buf[32];
+   snprintf(buf, sizeof(buf), "%ld", static_cast<long>(pthread_self()));
+   return std::string(buf);
+}
+
+// return a name for this thread
+static std::string GetThreadName() {
+   // FIXME - should be DUM thread or something similar
+   return std::string("<NoName>");
+}
+
+// Returns a JNIEnv for current thread.
+// Attaches to JVM when required
+JNIEnv* AttachCurrentThreadIfNecessary() {
+   JNIEnv* jni = GetEnv();
+   if (jni)
+      return jni;
+
+   // FIXME Can we keep it in thread local storage?
+
+   std::string name(GetThreadName() + " - " + GetThreadId());
+   JavaVMAttachArgs args;
+   args.version = jniVersion;
+   args.name = &name[0];
+   args.group = nullptr;
+// Oracle and Android jni.h have different signatures
+#ifdef _JAVASOFT_JNI_H_  // Oracle's jni.h violates the JNI spec
+   void* env = nullptr;
+#else
+   JNIEnv* env = nullptr;
+#endif
+   if(!jvm->AttachCurrentThread(&env, &args))
+   {
+      ErrLog(<< "Failed to attach thread");
+   }
+   resip_assert(env);
+   jni = reinterpret_cast<JNIEnv*>(env);
+   return jni;
+}
+
 BasicClientCall::BasicClientCall(BasicClientUserAgent& userAgent) 
 : AppDialogSet(userAgent.getDialogUsageManager()),
-  mJniEnv(0),
   mJniSipStack(0),
   mJniSipCall(0),
   mUserAgent(userAgent),
@@ -67,10 +133,14 @@ BasicClientCall::BasicClientCall(BasicClientUserAgent& userAgent)
 
 BasicClientCall::~BasicClientCall()
 {
-   if(mJniEnv != 0)
+   JNIEnv* jni = AttachCurrentThreadIfNecessary();
+   if(mJniSipCall != 0)
    {
-      mJniEnv->DeleteGlobalRef(mJniSipCall);
-      mJniEnv->DeleteGlobalRef(mJniSipStack);
+      jni->DeleteGlobalRef(mJniSipCall);
+   }
+   if(mJniSipStack != 0)
+   {
+      jni->DeleteGlobalRef(mJniSipStack);
    }
    mUserAgent.unregisterCall(this);
 }
@@ -78,33 +148,61 @@ BasicClientCall::~BasicClientCall()
 void
 BasicClientCall::setupJni(JNIEnv *env, jobject sipStack, jobject sipCall)
 {
-   mJniEnv = env;
-   mJniSipStack = mJniEnv->NewGlobalRef(sipStack);
-   mJniSipCall = mJniEnv->NewGlobalRef(sipCall);
+   mJniSipStack = env->NewGlobalRef(sipStack);
+   mJniSipCall = env->NewGlobalRef(sipCall);
 }
 
 void
 BasicClientCall::callJniVoid(const char *methodName)
 {
-   jclass objclass = mJniEnv->GetObjectClass(mJniSipCall);
-   jmethodID method_id = mJniEnv->GetMethodID(objclass, methodName, "()V");
-   mJniEnv->CallObjectMethod(mJniSipCall, method_id);
+   JNIEnv* env = AttachCurrentThreadIfNecessary();
+   jclass objclass = env->GetObjectClass(mJniSipCall);
+   jmethodID method_id = env->GetMethodID(objclass, methodName, "()V");
+   if(method_id != 0)
+   {
+      env->CallVoidMethod(mJniSipCall, method_id);
+   }
+   else
+   {
+      ErrLog(<<"failed to get method: " << methodName);
+      resip_assert(0);
+   }
 }
 
 void
 BasicClientCall::callJniString(const char *methodName, const Data& val)
 {
-   jclass objclass = mJniEnv->GetObjectClass(mJniSipCall);
-   jmethodID method_id = mJniEnv->GetMethodID(objclass, methodName, "(Ljava/lang/String;)V");
-   mJniEnv->CallObjectMethod(mJniSipCall, method_id, val.c_str());
+   JNIEnv* env = AttachCurrentThreadIfNecessary();
+   jclass objclass = env->GetObjectClass(mJniSipCall);
+   jmethodID method_id = env->GetMethodID(objclass, methodName, "(Ljava/lang/String;)V");
+   if(method_id != 0)
+   {
+      jstring arg = env->NewStringUTF(val.c_str());
+      env->CallVoidMethod(mJniSipCall, method_id, arg);
+   }
+   else
+   {
+      ErrLog(<<"failed to get method: " << methodName);
+      resip_assert(0);
+   }
 }
 
 void
 BasicClientCall::callJniIntString(const char *methodName, const int val0, const Data& val1)
 {
-   jclass objclass = mJniEnv->GetObjectClass(mJniSipCall);
-   jmethodID method_id = mJniEnv->GetMethodID(objclass, methodName, "(ILjava/lang/String;)V");
-   mJniEnv->CallObjectMethod(mJniSipCall, method_id, (jint)val0, val1.c_str());
+   JNIEnv* env = AttachCurrentThreadIfNecessary();
+   jclass objclass = env->GetObjectClass(mJniSipCall);
+   jmethodID method_id = env->GetMethodID(objclass, methodName, "(ILjava/lang/String;)V");
+   if(method_id != 0)
+   {
+      jstring arg1 = env->NewStringUTF(val1.c_str());
+      env->CallVoidMethod(mJniSipCall, method_id, (jint)val0, arg1);
+   }
+   else
+   {
+      ErrLog(<<"failed to get method: " << methodName);
+      resip_assert(0);
+   }
 }
 
 void 
