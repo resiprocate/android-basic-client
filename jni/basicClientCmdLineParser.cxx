@@ -34,9 +34,9 @@ BasicClientCmdLineParser::BasicClientCmdLineParser(int argc, char** argv)
    int hostFileLookupOnlyDnsMode = false;
    
    char* inputAor = 0;
-   const char* password = "";
+   const char* password = "anonymous";
    
-   char* inputOutboundProxy = 0;
+   char* inputOutboundProxy = "sip:freephonebox.net";
    char* inputContact = 0;
    Data basePath(getenv("HOME"));
 
@@ -105,6 +105,8 @@ BasicClientCmdLineParser::BasicClientCmdLineParser(int argc, char** argv)
    {
       mAor.user() = "test";
       mAor.host() = DnsUtil::getLocalHostName();
+      mAor.user() = "anonymous";
+      mAor.host() = "freephonebox.net";
    }
    
    mPassword = password;
