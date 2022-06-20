@@ -237,6 +237,15 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipStack_init
 
    AndroidLogger *alog = new AndroidLogger();
    Log::initialize(Log::Cout, Log::Stack, "SIP", *alog);
+   char buffer[2048];
+   if(getcwd(buffer, 2047) != NULL)
+   {
+      InfoLog(<<"cwd: " << buffer);
+   }
+   for(char** e = environ; *e != NULL; e++)
+   {
+      InfoLog(<<"Found environment variable: " << *e);
+   }
    
    /*
    RegListener client;
