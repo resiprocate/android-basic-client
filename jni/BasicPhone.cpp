@@ -286,7 +286,7 @@ JNIEXPORT void JNICALL Java_org_resiprocate_android_basicclient_SipStack_init
    */
 
    static int argc = 3;
-   static char *argv[] = { "BasicClient", "--aor", strdup(_sipUser), 0 };
+   static char *argv[] = { "BasicClient", "--aor", strdup(_sipUser), 0 }; // only used if HAVE_POPT
    InfoLog(<<"construct BasicClientUserAgent");
    basicUA.reset(new BasicClientUserAgent(argc, argv));
    InfoLog(<<"start BasicClientUserAgent");
