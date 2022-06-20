@@ -34,6 +34,8 @@
 #include "basicClientUserAgent.hxx"
 #include "basicClientCall.hxx"
 
+#include "RootCertificates.hxx"
+
 #include <utility>
 
 using namespace resip;
@@ -141,6 +143,13 @@ BasicClientUserAgent::BasicClientUserAgent(int argc, char** argv) :
    if(mHostFileLookupOnlyDnsMode)
    {
       AresDns::enableHostFileLookupOnlyMode(true);
+   }
+
+   if(mSecurity)
+   {
+      Data roots(rootCertificates);
+      InfoLog(<<"Attempting to load rootCertificates, size = " << roots.size());
+      mSecurity->addRootCertPEM(roots);
    }
 
    InfoLog(<<"adding transports");
